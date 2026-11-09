@@ -34,10 +34,6 @@ h1{margin:25px 0 5px;text-align:center;color:var(--deep);font-family:"Cormorant 
 @keyframes heartbeat{0%,100%{transform:scale(1)}12%{transform:scale(1.22)}24%{transform:scale(1)}36%{transform:scale(1.16)}48%{transform:scale(1)}}
 .corner{position:absolute;color:#e9a0af;font-size:27px;opacity:.7}.tl{top:18px;left:22px}.tr{top:18px;right:22px;transform:scaleX(-1)}.bl{bottom:18px;left:22px;transform:scaleY(-1)}.br{bottom:18px;right:22px;transform:scale(-1)}
 footer{position:relative;z-index:1;margin-top:23px;color:#bd8793;font-size:10px;letter-spacing:.12em;text-align:center}
-.music-control{position:fixed;z-index:5;right:18px;bottom:18px;display:flex;align-items:center;gap:10px;padding:11px 15px;border:1px solid rgba(201,39,69,.2);border-radius:999px;background:rgba(255,255,255,.9);color:var(--deep);box-shadow:0 8px 28px rgba(129,29,53,.13);font:600 12px "DM Sans",sans-serif;cursor:pointer;backdrop-filter:blur(12px);transition:transform .2s,background .2s}
-.music-control:hover{transform:translateY(-2px);background:#fff}.music-icon{font-size:15px;color:var(--red)}.music-control:focus-visible{outline:3px solid #c92745;outline-offset:3px}
-.music-note{position:fixed;z-index:4;right:20px;bottom:66px;color:#a86b79;font-size:10px;text-align:right;max-width:210px}
-@media(max-width:520px){body{padding:34px 12px 85px}main{border-radius:23px;padding:45px 25px}.corner{font-size:21px}.tl{top:13px;left:15px}.tr{top:13px;right:15px}.bl{bottom:13px;left:15px}.br{bottom:13px;right:15px}.bottom{letter-spacing:.12em;font-size:9px}.music-control{right:12px;bottom:12px}.music-note{right:14px;bottom:59px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}}
 </style>
 </head>
@@ -53,16 +49,25 @@ footer{position:relative;z-index:1;margin-top:23px;color:#bd8793;font-size:10px;
 </main>
 <footer>made of petals &amp; unspoken thoughts</footer>
 <audio id="backgroundMusic" loop preload="auto"><source src="background-music.mp3" type="audio/mpeg">Your browser does not support audio playback.</audio>
-<div class="music-note" id="musicNote" aria-live="polite">Tap the music button to listen</div>
-<button class="music-control" id="musicToggle" type="button" aria-label="Play background music"><span class="music-icon" id="musicIcon">♫</span><span id="musicLabel">Play music</span></button>
 <script>
 const petals=document.getElementById('petals'),hearts=document.getElementById('hearts');
 for(let i=0;i<24;i++){const p=document.createElement('i');p.className='petal';p.style.left=Math.random()*100+'vw';p.style.animationDuration=9+Math.random()*13+'s';p.style.animationDelay=-Math.random()*20+'s';p.style.transform='scale('+(0.55+Math.random()*0.8)+')';petals.appendChild(p)}
 for(let i=0;i<11;i++){const h=document.createElement('i');h.className='heart';h.textContent=Math.random()>.5?'♡':'♥';h.style.left=Math.random()*100+'vw';h.style.animationDuration=7+Math.random()*8+'s';h.style.animationDelay=-Math.random()*14+'s';h.style.fontSize=12+Math.random()*15+'px';hearts.appendChild(h)}
-const music=document.getElementById('backgroundMusic'),toggle=document.getElementById('musicToggle'),label=document.getElementById('musicLabel'),icon=document.getElementById('musicIcon'),note=document.getElementById('musicNote');
-function updateMusicButton(){const playing=!music.paused;label.textContent=playing?'Pause music':'Play music';icon.textContent=playing?'Ⅱ':'♫';toggle.setAttribute('aria-label',playing?'Pause background music':'Play background music');note.textContent=playing?'Now playing · loops automatically':'Music is paused'}
-toggle.addEventListener('click',async()=>{if(music.paused){try{await music.play();updateMusicButton()}catch(e){note.textContent='Could not play audio. Check background-music.mp3 is beside index.html.'}}else{music.pause();updateMusicButton()}});
-music.addEventListener('play',updateMusicButton);music.addEventListener('pause',updateMusicButton);
-window.addEventListener('load',async()=>{try{await music.play();updateMusicButton()}catch(e){note.textContent='Tap Play music to start the background song'}});
+const music=document.getElementById('backgroundMusic');
+music.loop=true;
+music.volume=0.75;
+let musicStarted=false;
+async function startBackgroundMusic(){
+  if(musicStarted) return;
+  musicStarted=true;
+  try{ await music.play(); }
+  catch(error){ musicStarted=false; }
+}
+// Try autoplay where the browser permits it. If blocked, start on the
+// visitor's first tap/click or key press. There is no visible music button.
+window.addEventListener('load',()=>{ startBackgroundMusic(); });
+document.addEventListener('pointerdown',startBackgroundMusic,{once:true,passive:true});
+document.addEventListener('keydown',startBackgroundMusic,{once:true});
+music.addEventListener('ended',()=>{ music.currentTime=0; music.play().catch(()=>{}); });
 </script>
 </body></html>
